@@ -387,54 +387,97 @@ dirLight.intensity = 1.2;
 // ═══════════════════════════════════════════════════════════════════
 // ═══ VR-CONTROLLER-STEUERUNG (Quest-Style) ═══════════════════════
 // ═══════════════════════════════════════════════════════════════════
-// Linker Stick Y  = Vorwärts / Rückwärts
-// Rechter Stick X = Kamera links / rechts drehen
-// ═══════════════════════════════════════════════════════════════════
 const VR_MOVE_SPEED = 3.5;
-const VR_TURN_SPEED = 2.5;
+const VR_TURN_SPEED = 2.0;
 const VR_DEADZONE = 0.15;
 
-function updateVRMovement(delta) {
-  if (!renderer.xr.isPresenting) return;
+let vrSession = null;
+let vrInputSources = [];
+
+// Session-Events tracken
+renderer.xr.addEventListener('sessionstart', () => {
+  vrSession = renderer.xr.getSession();
+  if (vrSession) {
+    vrInputSources = Array.from(vrSession.inputSources);
+    vrSession.addEventListener('inputsourceschange', (e) => {
+      vrInputSources = Array.from(vrSession.inputSources);
+    });
+  }
+});
+
+renderer.xr.addEventListener('sessionend', () => {
+  vrSession = null;
+  vrInputSources = [];
+});
+
+function getStickAxes(gamepad) {
+  if (!gamepad || !gamepad.connected) return { x: 0, y: 0 };
+  const axes = gamepad.axes;
+  if (!axes || axes.length < 2) return { x: 0, y: 0 };
   
-  const session = renderer.xr.getSession();
-  if (!session) return;
+  // Quest 3 / Standard-WebXR: Thumbstick ist meist axes[2]/axes[3]
+  // Fallback auf axes[0]/axes[1] wenn nichts anderes verfügbar
+  let x = 0, y = 0;
   
-  let moveForward = 0; // Left stick Y
-  let turn = 0;        // Right stick X
-  
-  for (const inputSource of session.inputSources) {
-    if (!inputSource.gamepad) continue;
-    const axes = inputSource.gamepad.axes;
-    if (!axes || axes.length < 2) continue;
-    
-    if (inputSource.handedness === 'left') {
-      moveForward = -axes[1]; // Invertieren: Stick hoch = vorwärts
+  if (axes.length >= 4) {
+    // Wenn axes[2] oder axes[3] außerhalb der Deadzone sind, nutze diese (Thumbstick)
+    // Sonst nutze axes[0]/axes[1] (manchmal Touchpad)
+    if (Math.abs(axes[2]) > 0.05 || Math.abs(axes[3]) > 0.05) {
+      x = axes[2];
+      y = axes[3];
+    } else {
+      x = axes[0];
+      y = axes[1];
     }
-    else if (inputSource.handedness === 'right') {
-      turn = -axes[0]; // Invertieren für intuitive Drehrichtung
+  } else {
+    x = axes[0];
+    y = axes[1];
+  }
+  
+  return { x, y };
+}
+
+function updateVRMovement(delta) {
+  if (!vrSession || vrInputSources.length === 0) return;
+  
+  let moveY = 0;
+  let turnX = 0;
+  
+  for (const src of vrInputSources) {
+    if (!src.gamepad) continue;
+    const stick = getStickAxes(src.gamepad);
+    
+    if (src.handedness === 'left') {
+      moveY = -stick.y; // Stick vor = negativ Y = vorwärts
+    } else if (src.handedness === 'right') {
+      turnX = -stick.x; // Stick links = negativ X = drehen links
     }
   }
   
-  if (Math.abs(moveForward) < VR_DEADZONE) moveForward = 0;
-  if (Math.abs(turn) < VR_DEADZONE) turn = 0;
+  // Deadzone anwenden
+  if (Math.abs(moveY) < VR_DEADZONE) moveY = 0;
+  if (Math.abs(turnX) < VR_DEADZONE) turnX = 0;
   
   const pivot = controls.getObject();
   
-  // Kamera links / rechts drehen (rechter Stick)
-  if (turn !== 0) {
-    pivot.rotation.y += turn * VR_TURN_SPEED * delta;
+  // ── Drehung (rechter Stick) ──────────────────────────────────
+  if (turnX !== 0) {
+    pivot.rotation.y += turnX * VR_TURN_SPEED * delta;
   }
   
-  // Vorwärts / Rückwärts bewegen (linker Stick)
-  if (moveForward !== 0) {
+  // ── Bewegung (linker Stick) ──────────────────────────────────
+  if (moveY !== 0) {
     const speed = VR_MOVE_SPEED * delta;
-    camera.getWorldDirection(tmpVec);
-    tmpVec.y = 0;
-    tmpVec.normalize();
     
-    const moveVec = tmpVec.clone().multiplyScalar(moveForward * speed);
+    // Blickrichtung des HEADSETS (nicht Controller)
+    const lookDir = new THREE.Vector3();
+    camera.getWorldDirection(lookDir);
+    lookDir.y = 0;
+    lookDir.normalize();
     
+    const moveVec = lookDir.clone().multiplyScalar(moveY * speed);
+    
+    // X-Achse mit Kollisionsprüfung
     if (Math.abs(moveVec.x) > 0.0001) {
       const px = pivot.position.clone().addScaledVector(new THREE.Vector3(moveVec.x, 0, 0), WALL_MARGIN + 0.01);
       if (!isBlocked(px, new THREE.Vector3(moveVec.x, 0, 0).normalize())) {
@@ -442,6 +485,7 @@ function updateVRMovement(delta) {
       }
     }
     
+    // Z-Achse mit Kollisionsprüfung
     if (Math.abs(moveVec.z) > 0.0001) {
       const pz = pivot.position.clone().addScaledVector(new THREE.Vector3(0, 0, moveVec.z), WALL_MARGIN + 0.01);
       if (!isBlocked(pz, new THREE.Vector3(0, 0, moveVec.z).normalize())) {
@@ -449,6 +493,7 @@ function updateVRMovement(delta) {
       }
     }
     
+    // Bodenhöhe anpassen
     if (collisionMeshes.length > 0) {
       pivot.position.y = groundHeight(pivot.position);
     }
