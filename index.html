@@ -385,44 +385,75 @@ ambientLight.intensity = 1.5;
 dirLight.intensity = 1.2;
 
 // ═══════════════════════════════════════════════════════════════════
-// ═══ VR-TELEPORTATION SETUP ══════════════════════════════════════
+// ═══ VR-CONTROLLER-STEUERUNG (Quest-Style) ═══════════════════════
 // ═══════════════════════════════════════════════════════════════════
+// Linker Stick Y  = Vorwärts / Rückwärts
+// Rechter Stick X = Kamera links / rechts drehen
+// ═══════════════════════════════════════════════════════════════════
+const VR_MOVE_SPEED = 3.5;
+const VR_TURN_SPEED = 2.5;
+const VR_DEADZONE = 0.15;
 
-// Rechter Controller für Teleportation (Index 0)
-const controller = renderer.xr.getController(0);
-scene.add(controller);
-
-// Sichtbarer Ray aus dem Controller
-const rayGeo = new THREE.BufferGeometry().setFromPoints([
-  new THREE.Vector3(0, 0, 0),
-  new THREE.Vector3(0, 0, -1)
-]);
-const rayMat = new THREE.LineBasicMaterial({ color: 0xc8b89a });
-const teleportRay = new THREE.Line(rayGeo, rayMat);
-teleportRay.scale.z = 30; // Länge des Rays
-controller.add(teleportRay);
-
-// Teleport-Ziel-Marker (Ring auf dem Boden)
-const ringGeo = new THREE.RingGeometry(0.15, 0.2, 32);
-ringGeo.rotateX(-Math.PI / 2);
-const ringMat = new THREE.MeshBasicMaterial({ color: 0xc8b89a, transparent: true, opacity: 0.8, side: THREE.DoubleSide });
-const teleportMarker = new THREE.Mesh(ringGeo, ringMat);
-teleportMarker.visible = false;
-scene.add(teleportMarker);
-
-let teleportTarget = null;
-const tempMatrix = new THREE.Matrix4();
-const raycasterVR = new THREE.Raycaster();
-
-// Trigger-Klick = Teleportieren
-controller.addEventListener('select', () => {
-  if (teleportTarget) {
-    const pivot = controls.getObject();
-    pivot.position.set(teleportTarget.x, teleportTarget.y + EYE_HEIGHT, teleportTarget.z);
-    teleportMarker.visible = false;
+function updateVRMovement(delta) {
+  if (!renderer.xr.isPresenting) return;
+  
+  const session = renderer.xr.getSession();
+  if (!session) return;
+  
+  let moveForward = 0; // Left stick Y
+  let turn = 0;        // Right stick X
+  
+  for (const inputSource of session.inputSources) {
+    if (!inputSource.gamepad) continue;
+    const axes = inputSource.gamepad.axes;
+    if (!axes || axes.length < 2) continue;
+    
+    if (inputSource.handedness === 'left') {
+      moveForward = -axes[1]; // Invertieren: Stick hoch = vorwärts
+    }
+    else if (inputSource.handedness === 'right') {
+      turn = -axes[0]; // Invertieren für intuitive Drehrichtung
+    }
   }
-});
-
+  
+  if (Math.abs(moveForward) < VR_DEADZONE) moveForward = 0;
+  if (Math.abs(turn) < VR_DEADZONE) turn = 0;
+  
+  const pivot = controls.getObject();
+  
+  // Kamera links / rechts drehen (rechter Stick)
+  if (turn !== 0) {
+    pivot.rotation.y += turn * VR_TURN_SPEED * delta;
+  }
+  
+  // Vorwärts / Rückwärts bewegen (linker Stick)
+  if (moveForward !== 0) {
+    const speed = VR_MOVE_SPEED * delta;
+    camera.getWorldDirection(tmpVec);
+    tmpVec.y = 0;
+    tmpVec.normalize();
+    
+    const moveVec = tmpVec.clone().multiplyScalar(moveForward * speed);
+    
+    if (Math.abs(moveVec.x) > 0.0001) {
+      const px = pivot.position.clone().addScaledVector(new THREE.Vector3(moveVec.x, 0, 0), WALL_MARGIN + 0.01);
+      if (!isBlocked(px, new THREE.Vector3(moveVec.x, 0, 0).normalize())) {
+        pivot.position.x += moveVec.x;
+      }
+    }
+    
+    if (Math.abs(moveVec.z) > 0.0001) {
+      const pz = pivot.position.clone().addScaledVector(new THREE.Vector3(0, 0, moveVec.z), WALL_MARGIN + 0.01);
+      if (!isBlocked(pz, new THREE.Vector3(0, 0, moveVec.z).normalize())) {
+        pivot.position.z += moveVec.z;
+      }
+    }
+    
+    if (collisionMeshes.length > 0) {
+      pivot.position.y = groundHeight(pivot.position);
+    }
+  }
+}
 // ═══════════════════════════════════════════════════════════════════
 
 // ── Regler ───────────────────────────────────────────────────────
@@ -732,37 +763,6 @@ function updateMovement(delta){
   }
 }
 
-// ── VR-Teleportation Update ──────────────────────────────────────
-function updateVRTeleport() {
-  if (!renderer.xr.isPresenting) return;
-  
-  tempMatrix.identity().extractRotation(controller.matrixWorld);
-  raycasterVR.ray.origin.setFromMatrixPosition(controller.matrixWorld);
-  raycasterVR.ray.direction.set(0, 0, -1).applyMatrix4(tempMatrix);
-  raycasterVR.far = 50;
-  
-  const hits = raycasterVR.intersectObjects(collisionMeshes, true);
-  
-  if (hits.length > 0) {
-    const hit = hits[0];
-    // Nur flache Oberflächen (Normal zeigt nach oben > 0.7)
-    if (hit.face.normal.y > 0.7) {
-      teleportTarget = hit.point;
-      teleportMarker.position.copy(hit.point);
-      teleportMarker.visible = true;
-      teleportRay.material.color.setHex(0x00ff88); // Grün = gültig
-    } else {
-      teleportTarget = null;
-      teleportMarker.visible = false;
-      teleportRay.material.color.setHex(0xff4444); // Rot = ungültig (Wand/Decke)
-    }
-  } else {
-    teleportTarget = null;
-    teleportMarker.visible = false;
-    teleportRay.material.color.setHex(0xc8b89a); // Neutral
-  }
-}
-
 // ── Render-Loop (WebXR-kompatibel) ───────────────────────────────
 const clock=new THREE.Clock();
 function animate(){
@@ -770,7 +770,7 @@ function animate(){
     const delta = clock.getDelta();
     
     if (renderer.xr.isPresenting) {
-      updateVRTeleport();
+      updateVRMovement(delta);
     } else {
       updateMovement(delta);
     }
