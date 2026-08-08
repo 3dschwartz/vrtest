@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-<title>010101</title>
+<title>zero</title>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 body{background:#ffffff;font-family:'Courier New',monospace;color:#e0e0e0;overflow:hidden;height:100dvh;touch-action:none}
@@ -323,6 +323,15 @@ renderer.xr.enabled = true; // WebXR aktivieren
 const vrBtn = VRButton.createButton(renderer);
 document.body.appendChild(vrBtn);
 renderer.xr.addEventListener('sessionend', () => { debugSprite.visible = false; });
+renderer.xr.addEventListener('sessionstart', () => {
+  // Beim Betreten von VR den Dolly auf Bodenhöhe im Raumzentrum setzen.
+  // WICHTIG: hier die Bodenhöhe (nicht + Augenhöhe) verwenden, da die
+  // 'local-floor'-Referenz des Headsets die reale Körpergröße bereits
+  // selbst mitbringt - würde man hier zusätzlich EYE_HEIGHT addieren,
+  // stünde man beim Aufsetzen der Brille zu weit oben im Raum.
+  vrDolly.position.set(roomSpawnCenter.x, lastFloorY, roomSpawnCenter.z);
+  vrDolly.rotation.set(0, 0, 0);
+});
 
 // ── Szene ────────────────────────────────────────────────────────
 const scene = new THREE.Scene();
@@ -332,7 +341,25 @@ scene.fog = new THREE.Fog(currentBgColor, 8, 25);
 
 // ── Kamera ───────────────────────────────────────────────────────
 const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.05, 50);
-scene.add(camera);
+
+// ── VR-Rig (Dolly) ───────────────────────────────────────────────
+// WICHTIG: PointerLockControls (moderne three.js-Versionen) bewegt die
+// Kamera direkt und legt sie NICHT mehr in ein separates Pivot-Objekt -
+// controls.getObject() gibt schlicht die Kamera zurück. Für Desktop/
+// Touch ist das genau richtig. Sobald aber eine WebXR-Session aktiv
+// ist, überschreibt der Browser JEDEN FRAME die lokale Position/
+// Rotation der Kamera anhand der Headset-Pose - eigene Änderungen an
+// camera.position/rotation gehen dort sofort wieder verloren (das war
+// der Grund, warum sich die Achsenwerte im Debug-HUD ändern, aber
+// nichts sichtbar bewegt).
+// Lösung: Die Kamera bekommt ein Eltern-Objekt (Dolly), das NUR in VR
+// bewegt/gedreht wird. Die Kamera selbst bewegt sich dann relativ dazu
+// ganz normal durchs Headset-Tracking. Im Desktop-/Touch-Modus bleibt
+// der Dolly bei (0,0,0) ohne Rotation, wirkt also wie ein reines
+// Durchreiche-Objekt - dort ändert sich nichts am bisherigen Verhalten.
+const vrDolly = new THREE.Object3D();
+scene.add(vrDolly);
+vrDolly.add(camera);
 
 // ── VR-Debug-HUD (nur im Headset sichtbar, folgt dem Blick) ───────
 // Da man in VR keine Browser-Konsole sehen kann, wird hier eine kleine
@@ -401,10 +428,15 @@ gltfLoader.setDRACOLoader(dracoLoader);
 
 // ── PointerLockControls (Desktop) ────────────────────────────────
 const controls = new PointerLockControls(camera, document.body);
-scene.add(controls.getObject());
+// HINWEIS: kein scene.add(controls.getObject()) hier - das würde die
+// Kamera aus dem vrDolly wieder direkt in die scene umhängen und den
+// VR-Fix oben zunichtemachen. controls.getObject() ist ohnehin nur
+// die Kamera selbst, die bereits über vrDolly.add(camera) korrekt
+// in der Szene hängt.
 
 let EYE_HEIGHT = 1.20;
 let lastFloorY = 0;
+let roomSpawnCenter = new THREE.Vector3(); // Raummitte, für VR-Dolly-Spawn (siehe sessionstart oben)
 let collisionMeshes = [];
 let currentModel = null;
 let animRunning = false;
@@ -475,7 +507,7 @@ function updateVRMovement(delta) {
 
   if (moveY === 0 && turnX === 0) return;
 
-  const pivot = controls.getObject();
+  const pivot = vrDolly; // NICHT controls.getObject() - siehe Erklärung beim vrDolly weiter oben
   
   // Drehung (rechter Stick)
   if (turnX !== 0) {
@@ -512,9 +544,10 @@ function updateVRMovement(delta) {
       }
     }
     
-    // Bodenhöhe anpassen
+    // Bodenhöhe anpassen - hier OHNE Augenhöhen-Offset (siehe vrGroundHeight),
+    // weil die reale Körpergröße bereits über das Headset-Tracking einfließt.
     if (collisionMeshes.length > 0) {
-      pivot.position.y = groundHeight(pivot.position);
+      pivot.position.y = vrGroundHeight(pivot.position);
     }
   }
 }
@@ -774,6 +807,7 @@ function setupModel(gltf, filename) {
   
   // Kamera auf Bodenhöhe + Augenhöhe setzen
   controls.getObject().position.set(center.x, lastFloorY + EYE_HEIGHT, center.z);
+  roomSpawnCenter.set(center.x, 0, center.z);
 
   overlayTitle.textContent=filename.replace(/\.glb$/i,'');
   loaderEl.classList.add('hidden');
@@ -795,6 +829,25 @@ function groundHeight(pos){
     lastFloorY=(pos.y-0.05)-hits[0].distance;
     const targetY = lastFloorY + EYE_HEIGHT;
     const diff = targetY - pos.y;
+    if (Math.abs(diff) < 0.002) return pos.y;
+    if (Math.abs(diff) > 1.0) return pos.y + diff * 0.5;
+    return pos.y + diff * 0.15;
+  }
+  return pos.y;
+}
+
+// Wie groundHeight(), aber für den VR-Dolly: der sitzt selbst auf
+// Bodenhöhe (nicht auf Augenhöhe wie die Desktop-Kamera), da die
+// tatsächliche Augenhöhe schon über das Headset-Tracking dazukommt.
+// Deshalb wird hier von oberhalb (ungefähre Kopfhöhe) nach unten
+// gestrahlt und als Ziel direkt die Bodenhöhe verwendet (ohne +EYE_HEIGHT).
+function vrGroundHeight(pos){
+  floorRay.set(new THREE.Vector3(pos.x, pos.y+EYE_HEIGHT-0.05, pos.z),DOWN); floorRay.far=FLOOR_SEARCH;
+  const hits=floorRay.intersectObjects(collisionMeshes,true);
+  if(hits.length>0){
+    const floorY=(pos.y+EYE_HEIGHT-0.05)-hits[0].distance;
+    lastFloorY=floorY;
+    const diff = floorY - pos.y;
     if (Math.abs(diff) < 0.002) return pos.y;
     if (Math.abs(diff) > 1.0) return pos.y + diff * 0.5;
     return pos.y + diff * 0.15;
