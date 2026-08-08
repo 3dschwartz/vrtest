@@ -378,7 +378,7 @@ debugSprite.renderOrder = 999;
 debugSprite.visible = false;
 camera.add(debugSprite);
 
-let vrDebugEnabled = true; // auf false setzen, um das HUD wieder auszublenden
+let vrDebugEnabled = false; // auf false setzen, um das HUD wieder auszublenden
 function updateDebugHUD(lines) {
   if (!vrDebugEnabled) { debugSprite.visible = false; return; }
   debugSprite.visible = true;
