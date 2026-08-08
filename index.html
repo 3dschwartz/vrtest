@@ -378,7 +378,7 @@ debugSprite.renderOrder = 999;
 debugSprite.visible = false;
 camera.add(debugSprite);
 
-let vrDebugEnabled = false; // auf false setzen, um das HUD wieder auszublenden
+let vrDebugEnabled = true; // auf false setzen, um das HUD wieder auszublenden
 function updateDebugHUD(lines) {
   if (!vrDebugEnabled) { debugSprite.visible = false; return; }
   debugSprite.visible = true;
@@ -448,17 +448,113 @@ ambientLight.intensity = 1.5;
 dirLight.intensity = 1.2;
 
 // ═══════════════════════════════════════════════════════════════════
+// ═══ VR-TELEPORT-STEUERUNG (Comfort Locomotion) ══════════════════════
+// Statt kontinuierlicher Bewegung (verursacht bei vielen Leuten
+// Motion Sickness, da sich der Körper bewegt fühlt, aber der Innenohr-
+// Gleichgewichtssinn keine Bewegung meldet) wird jetzt teleportiert:
+// Trigger halten -> Strahl + Bodenmarker erscheinen, Trigger loslassen
+// -> sofortiger Sprung an die Zielposition. Dazu kommt Snap-Turn
+// (Drehen in festen 30°-Schritten statt sanft) - kontinuierliches
+// Drehen ist ein zweiter Hauptauslöser für Übelkeit in VR.
+// ═══════════════════════════════════════════════════════════════════
+const controller0 = renderer.xr.getController(0);
+const controller1 = renderer.xr.getController(1);
+vrDolly.add(controller0);
+vrDolly.add(controller1);
+
+const teleportRayGeometry = new THREE.BufferGeometry().setFromPoints([
+  new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0, -1)
+]);
+const teleportRayMaterial = new THREE.LineBasicMaterial({ color: 0xc8b89a, transparent: true, opacity: 0.85 });
+function makeTeleportRay() {
+  const line = new THREE.Line(teleportRayGeometry, teleportRayMaterial);
+  line.visible = false;
+  return line;
+}
+const teleportRay0 = makeTeleportRay(); controller0.add(teleportRay0);
+const teleportRay1 = makeTeleportRay(); controller1.add(teleportRay1);
+
+const teleportMarker = new THREE.Mesh(
+  new THREE.RingGeometry(0.18, 0.26, 32).rotateX(-Math.PI / 2),
+  new THREE.MeshBasicMaterial({ color: 0xc8b89a, transparent: true, opacity: 0.85, side: THREE.DoubleSide, depthTest: false })
+);
+teleportMarker.renderOrder = 998;
+teleportMarker.visible = false;
+scene.add(teleportMarker); // in Weltkoordinaten, da das Ziel ein absoluter Punkt im Raum ist
+
+let activeTeleportController = null;
+let teleportTargetValid = false;
+const teleportTarget = new THREE.Vector3();
+const tpRaycaster = new THREE.Raycaster();
+const tpOrigin = new THREE.Vector3(), tpDir = new THREE.Vector3(), tpQuat = new THREE.Quaternion();
+const TELEPORT_MAX_DIST = 15;
+
+function onTeleportSelectStart(event) { activeTeleportController = event.target; }
+function onTeleportSelectEnd() {
+  if (teleportTargetValid) {
+    vrDolly.position.x = teleportTarget.x;
+    vrDolly.position.z = teleportTarget.z;
+    vrDolly.position.y = teleportTarget.y;
+    lastFloorY = teleportTarget.y;
+  }
+  activeTeleportController = null;
+  teleportTargetValid = false;
+  teleportRay0.visible = false;
+  teleportRay1.visible = false;
+  teleportMarker.visible = false;
+}
+controller0.addEventListener('selectstart', onTeleportSelectStart);
+controller0.addEventListener('selectend', onTeleportSelectEnd);
+controller1.addEventListener('selectstart', onTeleportSelectStart);
+controller1.addEventListener('selectend', onTeleportSelectEnd);
+
+function updateTeleportAim() {
+  teleportRay0.visible = false;
+  teleportRay1.visible = false;
+  teleportMarker.visible = false;
+  teleportTargetValid = false;
+  if (!activeTeleportController || collisionMeshes.length === 0) return;
+
+  const controller = activeTeleportController;
+  const rayLine = controller === controller0 ? teleportRay0 : teleportRay1;
+
+  controller.getWorldPosition(tpOrigin);
+  controller.getWorldQuaternion(tpQuat);
+  tpDir.set(0, 0, -1).applyQuaternion(tpQuat).normalize();
+
+  tpRaycaster.set(tpOrigin, tpDir);
+  tpRaycaster.far = TELEPORT_MAX_DIST;
+  const hits = tpRaycaster.intersectObjects(collisionMeshes, true);
+  // Nur nach-oben-zeigende Flächen (Boden) als gültiges Ziel akzeptieren,
+  // damit man nicht versehentlich in eine Wand oder Decke teleportiert.
+  const floorHit = hits.find(h => h.face && h.face.normal && h.face.normal.y > 0.6);
+
+  rayLine.scale.z = floorHit ? floorHit.distance : TELEPORT_MAX_DIST;
+  rayLine.visible = true;
+
+  if (floorHit) {
+    teleportTarget.set(floorHit.point.x, floorHit.point.y, floorHit.point.z);
+    teleportMarker.position.set(floorHit.point.x, floorHit.point.y + 0.01, floorHit.point.z);
+    teleportMarker.visible = true;
+    teleportTargetValid = true;
+  }
+}
+// ═══════════════════════════════════════════════════════════════════
+
+// ═══════════════════════════════════════════════════════════════════
 // ═══ VR-CONTROLLER-STEUERUNG (Quest-Style) ═══════════════════════
 // ═══════════════════════════════════════════════════════════════════
 const VR_MOVE_SPEED = 3.5;
 const VR_TURN_SPEED = 2.0;
+
+const VR_SNAP_TURN_DEG = 30;
+let snapTurnReady = true; // verhindert, dass ein gehaltener Stick pro Frame weiterdreht
 
 function updateVRMovement(delta) {
   const session = renderer.xr.getSession();
   const hudLines = [];
   if (!session) { updateDebugHUD(['Keine XR-Session aktiv']); return; }
 
-  let moveY = 0;
   let turnX = 0;
 
   hudLines.push('Session aktiv | Inputs: ' + session.inputSources.length);
@@ -486,70 +582,30 @@ function updateVRMovement(delta) {
     hudLines.push(hand + ' axes[' + axes.length + ']: ' +
       axes.map(a => a.toFixed(2)).join(', '));
 
-    if (hand === 'left') {
-      moveY = -sy; // Stick vor = negativ Y = vorwärts
-    } else if (hand === 'right') {
-      turnX = -sx; // Stick links = negativ X = drehen links
-    } else {
-      // Unbekannte Händigkeit (kommt gelegentlich vor): erster Controller
-      // in der Liste steuert Bewegung, zweiter die Drehung.
-      if (moveY === 0 && session.inputSources[0] === src) moveY = -sy;
-      else turnX = -sx;
+    // Bewegung läuft jetzt über Teleport (Trigger), nicht mehr über den
+    // linken Stick. Der rechte Stick wird nur noch fürs Snap-Turn benutzt.
+    if (hand === 'right' || (hand === '?' && session.inputSources[1] === src)) {
+      turnX = sx;
     }
   }
 
-  // Deadzone
-  if (Math.abs(moveY) < 0.15) moveY = 0;
-  if (Math.abs(turnX) < 0.15) turnX = 0;
+  // Snap-Turn: Stick über Schwelle auslenken -> einmalig fester Sprung um
+  // VR_SNAP_TURN_DEG. Erst wenn der Stick wieder in die Mitte zurückkehrt,
+  // ist die nächste Drehung "scharf". Das vermeidet die Übelkeit von
+  // kontinuierlicher Rotation komplett.
+  if (Math.abs(turnX) > 0.6) {
+    if (snapTurnReady) {
+      vrDolly.rotation.y -= Math.sign(turnX) * THREE.MathUtils.degToRad(VR_SNAP_TURN_DEG);
+      snapTurnReady = false;
+    }
+  } else {
+    snapTurnReady = true;
+  }
 
-  hudLines.push('-> moveY: ' + moveY.toFixed(2) + '  turnX: ' + turnX.toFixed(2));
+  updateTeleportAim();
+
+  hudLines.push('turnX: ' + turnX.toFixed(2) + '  Teleport-Ziel: ' + (teleportTargetValid ? 'ja' : 'nein'));
   updateDebugHUD(hudLines);
-
-  if (moveY === 0 && turnX === 0) return;
-
-  const pivot = vrDolly; // NICHT controls.getObject() - siehe Erklärung beim vrDolly weiter oben
-  
-  // Drehung (rechter Stick)
-  if (turnX !== 0) {
-    pivot.rotation.y += turnX * VR_TURN_SPEED * delta;
-  }
-  
-  // Bewegung (linker Stick)
-  if (moveY !== 0) {
-    const speed = VR_MOVE_SPEED * delta;
-    
-    // Blickrichtung des Headsets (nur horizontal)
-    const lookDir = new THREE.Vector3();
-    camera.getWorldDirection(lookDir);
-    lookDir.y = 0;
-    lookDir.normalize();
-    
-    const moveStep = lookDir.clone().multiplyScalar(moveY * speed);
-    
-    // X-Achse mit Kollisionsprüfung
-    if (Math.abs(moveStep.x) > 0.0001) {
-      const testPos = pivot.position.clone();
-      testPos.x += Math.sign(moveStep.x) * (WALL_MARGIN + 0.02);
-      if (!isBlocked(testPos, new THREE.Vector3(Math.sign(moveStep.x), 0, 0))) {
-        pivot.position.x += moveStep.x;
-      }
-    }
-    
-    // Z-Achse mit Kollisionsprüfung
-    if (Math.abs(moveStep.z) > 0.0001) {
-      const testPos = pivot.position.clone();
-      testPos.z += Math.sign(moveStep.z) * (WALL_MARGIN + 0.02);
-      if (!isBlocked(testPos, new THREE.Vector3(0, 0, Math.sign(moveStep.z)))) {
-        pivot.position.z += moveStep.z;
-      }
-    }
-    
-    // Bodenhöhe anpassen - hier OHNE Augenhöhen-Offset (siehe vrGroundHeight),
-    // weil die reale Körpergröße bereits über das Headset-Tracking einfließt.
-    if (collisionMeshes.length > 0) {
-      pivot.position.y = vrGroundHeight(pivot.position);
-    }
-  }
 }
 // ═══════════════════════════════════════════════════════════════════
 
