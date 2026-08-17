@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-<title>up1708</title>
+<title>vrvrvr</title>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 body{background:#ffffff;color:#000000;font-family:Arial,Helvetica,sans-serif;font-size:14px;overflow:hidden;height:100dvh;touch-action:none}
@@ -21,7 +21,7 @@ body{background:#ffffff;color:#000000;font-family:Arial,Helvetica,sans-serif;fon
 #upload-screen h1{font-weight:400;letter-spacing:0.3em;text-transform:uppercase;color:#000000}
 #upload-screen .subtitle{letter-spacing:0.2em;color:#555555;text-transform:uppercase;margin-top:-18px}
 
-.room-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:14px;width:min(480px,85vw)}
+.room-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;width:min(620px,92vw)}
 .room-card{padding:18px 14px;background:transparent;border:1px solid #cccccc;display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;transition:border-color 0.2s,background 0.2s}
 .room-card:hover,.room-card:active{border-color:#000000;background:rgba(0,0,0,0.04)}
 .room-card .room-category{letter-spacing:0.15em;color:#888888;text-transform:uppercase}
@@ -44,10 +44,10 @@ body{background:#ffffff;color:#000000;font-family:Arial,Helvetica,sans-serif;fon
 #overlay h2{font-weight:400;letter-spacing:0.25em;text-transform:uppercase;color:#000000}
 .controls-hint{display:grid;grid-template-columns:auto 1fr;gap:5px 14px;letter-spacing:0.08em;color:#888888;line-height:1.7}
 .controls-hint .key{color:#000000;text-align:right}
-.settings-grid{display:grid;grid-template-columns:auto minmax(90px,140px) 38px;column-gap:10px;row-gap:10px;align-items:center;width:min(320px,88vw)}
+.settings-grid{display:grid;grid-template-columns:auto minmax(90px,140px) auto;column-gap:10px;row-gap:10px;align-items:center;width:min(320px,88vw)}
 .settings-grid label{letter-spacing:0.1em;color:#888888;text-transform:uppercase;text-align:left;white-space:nowrap}
 .settings-grid input[type=range]{width:100%;accent-color:#000000;cursor:pointer}
-.settings-grid span{color:#000000;text-align:left;font-size:inherit}
+.settings-grid span{color:#000000;text-align:left;font-size:inherit;white-space:nowrap}
 .divider{width:min(320px,88vw);height:1px;background:#dddddd;margin:2px 0}
 .btn-row{display:flex;gap:12px;margin-top:4px}
 .start-btn{padding:10px 32px;background:transparent;border:1px solid #000000;color:#000000;letter-spacing:0.25em;text-transform:uppercase;cursor:pointer;transition:background 0.2s,color 0.2s}
@@ -231,7 +231,7 @@ const ROOMS = [
   },
   {
     category: '3D Scan',
-    name: 'Skatepark',
+    name: 'Scatepark',
     file: 'room_example_3.glb',
     brightness: 4.0,
     ibl: 0.1,
@@ -258,7 +258,7 @@ const ROOMS = [
   },
   {
     category: '3D Scan',
-    name: 'technical building',
+    name: 'Technical building',
     file: 'room_example_6.glb',
     brightness: 2.0,
     ibl: 1.0,
@@ -270,7 +270,7 @@ const ROOMS = [
   // ins Verzeichnis gelegt werden (Kategorie, Name, Dateiname und
   // Lichtwerte gerne nach Bedarf anpassen).
   {
-    category: '3D_Konstruction',
+    category: '3D Konstruction',
     name: 'old appartement',
     file: 'room_example_7.glb',
     brightness: 2.5,
@@ -279,7 +279,7 @@ const ROOMS = [
     bgColor: '#fefefe'
   },
   {
-    category: '3D_Konstruction',
+    category: '3D Konstruction',
     name: 'appartement',
     file: 'room_example_8.glb',
     brightness: 3.0,
@@ -288,7 +288,7 @@ const ROOMS = [
     bgColor: '#fefefe'
   },
   {
-    category: '3D_Konstruction',
+    category: '3D Konstruction',
     name: 'workshop',
     file: 'room_example_9.glb',
     brightness: 3.5,
@@ -371,10 +371,10 @@ renderer.xr.addEventListener('sessionstart', () => {
 const scene = new THREE.Scene();
 let currentBgColor = new THREE.Color(0xffffff);
 scene.background = currentBgColor;
-scene.fog = new THREE.Fog(currentBgColor, 450, 500);
+scene.fog = null; // Nebel deaktiviert - Sichtweite jetzt bis zur Far-Plane der Kamera (600m)
 
 // ── Kamera ───────────────────────────────────────────────────────
-const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.05, 50);
+const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.05, 650);
 
 // ── VR-Rig (Dolly) ───────────────────────────────────────────────
 // WICHTIG: PointerLockControls (moderne three.js-Versionen) bewegt die
@@ -665,7 +665,6 @@ hSlider.addEventListener('input', () => {
 bgColor.addEventListener('input', () => {
   currentBgColor = new THREE.Color(bgColor.value);
   scene.background = currentBgColor;
-  scene.fog = new THREE.Fog(currentBgColor, 8, 25);
 });
 
 // ── Desktop: PointerLock ─────────────────────────────────────────
@@ -811,7 +810,6 @@ function loadRoomByIndex(index) {
   bgColor.value = config.bgColor;
   currentBgColor = new THREE.Color(config.bgColor);
   scene.background = currentBgColor;
-  scene.fog = new THREE.Fog(currentBgColor, 8, 25);
   
   loadGLBFromURL(config.file);
 }
