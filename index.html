@@ -6,54 +6,54 @@
 <title>vrvrvr</title>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-body{background:#ffffff;font-family:'Courier New',monospace;color:#e0e0e0;overflow:hidden;height:100dvh;touch-action:none}
+body{background:#ffffff;color:#000000;font-family:Arial,Helvetica,sans-serif;font-size:14px;overflow:hidden;height:100dvh;touch-action:none}
 
-#loader{position:fixed;inset:0;background:#0a0a0a;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;z-index:100;transition:opacity 0.6s ease}
+#loader{position:fixed;inset:0;background:#ffffff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;z-index:100;transition:opacity 0.6s ease}
 #loader.hidden{opacity:0;pointer-events:none}
-#loader h1{font-size:clamp(1.2rem,3vw,1.8rem);font-weight:400;letter-spacing:0.3em;text-transform:uppercase;color:#c8b89a}
-.progress-bar{width:min(320px,80vw);height:2px;background:#2a2a2a}
-.progress-fill{height:100%;background:#c8b89a;width:0%;transition:width 0.3s ease}
-#loader-status{font-size:0.75rem;letter-spacing:0.15em;color:#666}
+#loader h1{font-weight:400;letter-spacing:0.3em;text-transform:uppercase;color:#000000}
+.progress-bar{width:min(320px,80vw);height:2px;background:#e0e0e0}
+.progress-fill{height:100%;background:#000000;width:0%;transition:width 0.3s ease}
+#loader-status{letter-spacing:0.15em;color:#666666}
 
 /* ── Startseite mit Raumauswahl ──────────────────────────── */
-#upload-screen{position:fixed;inset:0;background:#0a0a0a;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:28px;z-index:90;overflow-y:auto;padding:40px 20px}
+#upload-screen{position:fixed;inset:0;background:#ffffff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:28px;z-index:90;overflow-y:auto;padding:40px 20px}
 #upload-screen.hidden{display:none}
-#upload-screen h1{font-size:clamp(1.2rem,3vw,1.8rem);font-weight:400;letter-spacing:0.3em;text-transform:uppercase;color:#c8b89a}
-#upload-screen .subtitle{font-size:0.75rem;letter-spacing:0.2em;color:#555;text-transform:uppercase;margin-top:-18px}
+#upload-screen h1{font-weight:400;letter-spacing:0.3em;text-transform:uppercase;color:#000000}
+#upload-screen .subtitle{letter-spacing:0.2em;color:#555555;text-transform:uppercase;margin-top:-18px}
 
 .room-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:14px;width:min(480px,85vw)}
-.room-card{padding:18px 14px;background:transparent;border:1px solid #333;display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;transition:border-color 0.2s,background 0.2s}
-.room-card:hover,.room-card:active{border-color:#c8b89a;background:rgba(200,184,154,0.05)}
-.room-card .room-num{font-size:0.65rem;letter-spacing:0.2em;color:#555;text-transform:uppercase}
-.room-card .room-name{font-size:0.78rem;letter-spacing:0.15em;color:#888;text-transform:uppercase}
-.room-card.active{border-color:#c8b89a;background:rgba(200,184,154,0.08)}
+.room-card{padding:18px 14px;background:transparent;border:1px solid #cccccc;display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;transition:border-color 0.2s,background 0.2s}
+.room-card:hover,.room-card:active{border-color:#000000;background:rgba(0,0,0,0.04)}
+.room-card .room-category{letter-spacing:0.15em;color:#888888;text-transform:uppercase}
+.room-card .room-name{letter-spacing:0.1em;color:#000000;text-transform:uppercase}
+.room-card.active{border-color:#000000;background:rgba(0,0,0,0.05)}
 
-.divider-small{width:min(320px,60vw);height:1px;background:#222}
+.divider-small{width:min(320px,60vw);height:1px;background:#dddddd}
 
-#drop-zone{width:min(420px,85vw);height:120px;border:1px solid #333;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;cursor:pointer;transition:border-color 0.2s,background 0.2s}
-#drop-zone:hover,#drop-zone.dragover{border-color:#c8b89a;background:rgba(200,184,154,0.05)}
-#drop-zone .icon{font-size:2rem;opacity:0.4}
-#drop-zone p{font-size:0.72rem;letter-spacing:0.12em;color:#666;text-transform:uppercase;text-align:center;line-height:1.6}
+#drop-zone{width:min(420px,85vw);height:70px;border:1px solid #cccccc;display:flex;flex-direction:row;align-items:center;justify-content:center;gap:12px;cursor:pointer;transition:border-color 0.2s,background 0.2s}
+#drop-zone:hover,#drop-zone.dragover{border-color:#000000;background:rgba(0,0,0,0.04)}
+#drop-zone .icon{opacity:0.4}
+#drop-zone p{letter-spacing:0.12em;color:#666666;text-transform:uppercase;text-align:left;line-height:1.4}
 #file-input{display:none}
-.upload-btn{padding:10px 28px;background:transparent;border:1px solid #444;color:#888;font-family:'Courier New',monospace;font-size:0.72rem;letter-spacing:0.2em;text-transform:uppercase;cursor:pointer;transition:border-color 0.2s,color 0.2s}
-.upload-btn:hover,.upload-btn:active{border-color:#c8b89a;color:#c8b89a}
+.upload-btn{width:min(420px,85vw);height:70px;background:transparent;border:1px solid #bbbbbb;color:#888888;letter-spacing:0.2em;text-transform:uppercase;cursor:pointer;transition:border-color 0.2s,color 0.2s;display:flex;align-items:center;justify-content:center}
+.upload-btn:hover,.upload-btn:active{border-color:#000000;color:#000000}
 
 /* Overlay */
-#overlay{position:fixed;inset:0;background:rgba(10,10,10,0.88);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;z-index:50;backdrop-filter:blur(4px);transition:opacity 0.3s ease;overflow-y:auto;padding:20px 0}
+#overlay{position:fixed;inset:0;background:rgba(255,255,255,0.94);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;z-index:50;backdrop-filter:blur(4px);transition:opacity 0.3s ease;overflow-y:auto;padding:20px 0}
 #overlay.hidden{opacity:0;pointer-events:none}
-#overlay h2{font-size:clamp(1rem,2.5vw,1.4rem);font-weight:400;letter-spacing:0.25em;text-transform:uppercase;color:#c8b89a}
-.controls-hint{display:grid;grid-template-columns:auto 1fr;gap:5px 14px;font-size:0.75rem;letter-spacing:0.08em;color:#888;line-height:1.7}
-.controls-hint .key{color:#c8b89a;text-align:right}
-.slider-row{display:flex;align-items:center;gap:10px}
-.slider-row label{font-size:0.72rem;letter-spacing:0.1em;color:#888;text-transform:uppercase;white-space:nowrap;width:100px;text-align:right}
-.slider-row input[type=range]{width:140px;accent-color:#c8b89a;cursor:pointer}
-.slider-row span{font-size:0.72rem;color:#c8b89a;width:38px;text-align:left}
-.divider{width:280px;height:1px;background:#222;margin:2px 0}
+#overlay h2{font-weight:400;letter-spacing:0.25em;text-transform:uppercase;color:#000000}
+.controls-hint{display:grid;grid-template-columns:auto 1fr;gap:5px 14px;letter-spacing:0.08em;color:#888888;line-height:1.7}
+.controls-hint .key{color:#000000;text-align:right}
+.settings-grid{display:grid;grid-template-columns:auto minmax(90px,140px) 38px;column-gap:10px;row-gap:10px;align-items:center;width:min(320px,88vw)}
+.settings-grid label{letter-spacing:0.1em;color:#888888;text-transform:uppercase;text-align:left;white-space:nowrap}
+.settings-grid input[type=range]{width:100%;accent-color:#000000;cursor:pointer}
+.settings-grid span{color:#000000;text-align:left;font-size:inherit}
+.divider{width:min(320px,88vw);height:1px;background:#dddddd;margin:2px 0}
 .btn-row{display:flex;gap:12px;margin-top:4px}
-.start-btn{padding:10px 32px;background:transparent;border:1px solid #c8b89a;color:#c8b89a;font-family:'Courier New',monospace;font-size:0.75rem;letter-spacing:0.25em;text-transform:uppercase;cursor:pointer;transition:background 0.2s,color 0.2s}
-.start-btn:hover,.start-btn:active{background:#c8b89a;color:#0a0a0a}
-.new-file-btn{padding:10px 20px;background:transparent;border:1px solid #333;color:#555;font-family:'Courier New',monospace;font-size:0.75rem;letter-spacing:0.2em;text-transform:uppercase;cursor:pointer;transition:border-color 0.2s,color 0.2s}
-.new-file-btn:hover,.new-file-btn:active{border-color:#888;color:#888}
+.start-btn{padding:10px 32px;background:transparent;border:1px solid #000000;color:#000000;letter-spacing:0.25em;text-transform:uppercase;cursor:pointer;transition:background 0.2s,color 0.2s}
+.start-btn:hover,.start-btn:active{background:#000000;color:#ffffff}
+.new-file-btn{padding:10px 20px;background:transparent;border:1px solid #cccccc;color:#555555;letter-spacing:0.2em;text-transform:uppercase;cursor:pointer;transition:border-color 0.2s,color 0.2s}
+.new-file-btn:hover,.new-file-btn:active{border-color:#888888;color:#888888}
 
 /* Fadenkreuz (nur Desktop) */
 #crosshair{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:20px;height:20px;pointer-events:none;z-index:10;opacity:0;transition:opacity 0.3s ease}
@@ -64,25 +64,25 @@ body{background:#ffffff;font-family:'Courier New',monospace;color:#e0e0e0;overfl
 
 #canvas{display:block;position:fixed;inset:0}
 
-#esc-hint{position:fixed;top:14px;right:16px;font-size:0.65rem;letter-spacing:0.15em;color:#555;text-transform:uppercase;pointer-events:none;z-index:10;opacity:0;transition:opacity 0.3s ease}
+#esc-hint{position:fixed;top:14px;right:16px;letter-spacing:0.15em;color:#555555;text-transform:uppercase;pointer-events:none;z-index:10;opacity:0;transition:opacity 0.3s ease}
 #esc-hint.visible{opacity:1}
 
 /* Touch-Joystick Bewegung (links) */
 #joystick-move{position:fixed;left:20px;bottom:40px;width:110px;height:110px;z-index:20;display:none}
 #joy-move-base{position:absolute;inset:0;border-radius:50%;border:2px solid rgba(80,140,255,0.5);background:rgba(80,140,255,0.08)}
 #joy-move-knob{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:44px;height:44px;border-radius:50%;background:rgba(80,140,255,0.6);pointer-events:none}
-#joy-move-label{position:absolute;bottom:-22px;left:50%;transform:translateX(-50%);font-size:0.55rem;letter-spacing:0.1em;color:rgba(80,140,255,0.6);text-transform:uppercase;white-space:nowrap}
+#joy-move-label{position:absolute;bottom:-22px;left:50%;transform:translateX(-50%);letter-spacing:0.1em;color:rgba(80,140,255,0.6);text-transform:uppercase;white-space:nowrap}
 
 /* Touch-Joystick Drehen (rechts) */
 #joystick-turn{position:fixed;right:20px;bottom:40px;width:110px;height:110px;z-index:20;display:none}
 #joy-turn-base{position:absolute;inset:0;border-radius:50%;border:2px solid rgba(80,140,255,0.5);background:rgba(80,140,255,0.08)}
 #joy-turn-knob{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:44px;height:44px;border-radius:50%;background:rgba(80,140,255,0.6);pointer-events:none}
-#joy-turn-label{position:absolute;bottom:-22px;left:50%;transform:translateX(-50%);font-size:0.55rem;letter-spacing:0.1em;color:rgba(80,140,255,0.6);text-transform:uppercase;white-space:nowrap}
+#joy-turn-label{position:absolute;bottom:-22px;left:50%;transform:translateX(-50%);letter-spacing:0.1em;color:rgba(80,140,255,0.6);text-transform:uppercase;white-space:nowrap}
 
 /* Pause-Button (Touch) */
-#pause-btn{position:fixed;top:14px;right:16px;z-index:30;display:none;padding:8px 16px;background:rgba(10,10,10,0.6);border:1px solid #444;color:#888;font-family:'Courier New',monospace;font-size:0.65rem;letter-spacing:0.15em;text-transform:uppercase;cursor:pointer;backdrop-filter:blur(4px)}
+#pause-btn{position:fixed;top:14px;right:16px;z-index:30;display:none;padding:8px 16px;background:rgba(255,255,255,0.85);border:1px solid #bbbbbb;color:#888888;letter-spacing:0.15em;text-transform:uppercase;cursor:pointer;backdrop-filter:blur(4px)}
 
-#info{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);font-size:0.65rem;letter-spacing:0.15em;color:#444;text-transform:uppercase;pointer-events:none;z-index:10}
+#info{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);letter-spacing:0.15em;color:#666666;text-transform:uppercase;pointer-events:none;z-index:10}
 
 /* VR-Button Styling */
 #VRButton {
@@ -93,11 +93,11 @@ body{background:#ffffff;font-family:'Courier New',monospace;color:#e0e0e0;overfl
   top: auto !important;
   transform: translateX(-50%) !important;
   z-index: 100 !important;
-  background: rgba(10,10,10,0.9) !important;
-  border: 1px solid #c8b89a !important;
-  color: #c8b89a !important;
-  font-family: 'Courier New', monospace !important;
-  font-size: 0.72rem !important;
+  background: rgba(255,255,255,0.94) !important;
+  border: 1px solid #000000 !important;
+  color: #000000 !important;
+  
+  
   letter-spacing: 0.2em !important;
   text-transform: uppercase !important;
   padding: 10px 28px !important;
@@ -106,7 +106,7 @@ body{background:#ffffff;font-family:'Courier New',monospace;color:#e0e0e0;overfl
   backdrop-filter: blur(4px);
 }
 #VRButton:hover {
-  background: rgba(200,184,154,0.15) !important;
+  background: rgba(0,0,0,0.06) !important;
 }
 </style>
 <base target="_blank">
@@ -150,25 +150,22 @@ body{background:#ffffff;font-family:'Courier New',monospace;color:#e0e0e0;overfl
     <span class="key">Rechts</span><span>Wischen zum Umsehen</span>
   </div>
   <div class="divider"></div>
-  <div class="slider-row">
-    <label for="brightness-slider">&#9728; Helligkeit</label>
+  <div class="settings-grid">
+    <label for="brightness-slider">Helligkeit</label>
     <input type="range" id="brightness-slider" min="0.5" max="8" step="0.1" value="3.0" />
     <span id="brightness-value">3.0</span>
-  </div>
-  <div class="slider-row">
-    <label for="ibl-strength">&#10022; IBL St&auml;rke</label>
+
+    <label for="ibl-strength">IBL St&auml;rke</label>
     <input type="range" id="ibl-strength" min="0" max="3" step="0.1" value="0.2" />
     <span id="ibl-strength-value">0.2</span>
-  </div>
-  <div class="slider-row">
-    <label for="height-slider">&#8597; Augenh&ouml;he</label>
+
+    <label for="height-slider">Augenh&ouml;he</label>
     <input type="range" id="height-slider" min="0.5" max="2.5" step="0.05" value="1.20" />
     <span id="height-value">1.20 m</span>
-  </div>
-  <div class="slider-row">
-    <label for="bg-color">&#9632; Hintergrund</label>
-    <input type="color" id="bg-color" value="#ffffff" style="width:50px;height:28px;border:1px solid #444;background:none;cursor:pointer;padding:2px" />
-    <span style="font-size:0.7rem;color:#555;letter-spacing:0.05em">Farbe</span>
+
+    <label for="bg-color">Hintergrund</label>
+    <input type="color" id="bg-color" value="#ffffff" style="width:50px;height:28px;border:1px solid #bbbbbb;background:none;cursor:pointer;padding:2px" />
+    <span></span>
   </div>
   <div class="divider"></div>
   <div class="btn-row">
@@ -215,6 +212,7 @@ import { VRButton }            from 'three/addons/webxr/VRButton.js';
 // ═══════════════════════════════════════════════════════════════════
 const ROOMS = [
   {
+    category: 'Infrastruktur',
     name: 'Tunnel',
     file: 'room_example_1.glb',
     brightness: 3.0,
@@ -223,6 +221,7 @@ const ROOMS = [
     bgColor: '#fefefe'
   },
   {
+    category: 'Architektur',
     name: 'Treppenhaus',
     file: 'room_example_2.glb',
     brightness: 2.5,
@@ -231,6 +230,7 @@ const ROOMS = [
     bgColor: '#fefefe'
   },
   {
+    category: 'Freizeit',
     name: 'Scaterpark',
     file: 'room_example_3.glb',
     brightness: 4.0,
@@ -239,6 +239,7 @@ const ROOMS = [
      bgColor: '#fefefe'
   },
   {
+    category: 'Architektur',
     name: 'Keller',
     file: 'room_example_4.glb',
     brightness: 1.8,
@@ -247,6 +248,7 @@ const ROOMS = [
     bgColor: '#7a7a7a'
   },
   {
+    category: 'Infrastruktur',
     name: 'Auffahrt',
     file: 'room_example_5.glb',
     brightness: 3.5,
@@ -255,12 +257,44 @@ const ROOMS = [
     bgColor: '#f5f0e8'
   },
   {
+    category: '3D Konstruktion',
     name: 'Wohnung',
     file: 'room_example_6.glb',
     brightness: 2.0,
     ibl: 1.0,
     eyeHeight: 1.20,
     bgColor: '#fefefe'
+  },
+  // ── NEU: Platzhalter für 3 weitere Beispiele ──────────────────
+  // WICHTIG: Diese 3 Dateien müssen noch als room_example_7/8/9.glb
+  // ins Verzeichnis gelegt werden (Kategorie, Name, Dateiname und
+  // Lichtwerte gerne nach Bedarf anpassen).
+  {
+    category: '3D Konstruktion',
+    name: 'B\u00fcro',
+    file: 'room_example_7.glb',
+    brightness: 2.5,
+    ibl: 0.5,
+    eyeHeight: 1.20,
+    bgColor: '#fefefe'
+  },
+  {
+    category: 'Architektur',
+    name: 'Halle',
+    file: 'room_example_8.glb',
+    brightness: 3.0,
+    ibl: 0.3,
+    eyeHeight: 1.20,
+    bgColor: '#fefefe'
+  },
+  {
+    category: 'Freizeit',
+    name: 'Garten',
+    file: 'room_example_9.glb',
+    brightness: 3.5,
+    ibl: 0.4,
+    eyeHeight: 1.20,
+    bgColor: '#f0f0f0'
   }
 ];
 // ═══════════════════════════════════════════════════════════════════
@@ -745,7 +779,7 @@ function buildRoomCards() {
     const card = document.createElement('div');
     card.className = 'room-card';
     card.dataset.index = index;
-    card.innerHTML = `<span class="room-name">${room.name}</span>`;
+    card.innerHTML = `<span class="room-category">${room.category}</span><span class="room-name">${room.name}</span>`;
     card.addEventListener('click', () => {
       document.querySelectorAll('.room-card').forEach(c => c.classList.remove('active'));
       card.classList.add('active');
@@ -836,6 +870,11 @@ function setupModel(gltf, filename) {
 
   const box=new THREE.Box3().setFromObject(model);
   const center=box.getCenter(new THREE.Vector3());
+
+  // Boden-Suchreichweite an die Gebäudehöhe anpassen (mit Sicherheitspuffer).
+  // Bei einer hohen Fabrikhalle reicht eine feste 5m-Reichweite nicht aus,
+  // um beim Gehen/Teleportieren zuverlässig den Boden unter sich zu finden.
+  FLOOR_SEARCH = Math.max(5.0, (box.max.y - box.min.y) + 5.0);
   
   // ── KORREKTUR: Boden anhand der Flächen-Normalen erkennen ──
   // Ray von oben nach unten durch das Zentrum
@@ -848,11 +887,17 @@ function setupModel(gltf, filename) {
   const hits=startRay.intersectObjects(collisionMeshes,true);
   
   if (hits.length > 0) {
-    // Suche den obersten Treffer, dessen Normale nach oben zeigt (Boden)
-    // Das verhindert, dass wir auf dem Dach oder im Keller landen
-    const floorHit = hits.find(h => h.face && h.face.normal && h.face.normal.y > 0.5);
-    if (floorHit) {
-      lastFloorY = floorHit.point.y;
+    // Suche unter ALLEN nach-oben zeigenden Treffern den NIEDRIGSTEN.
+    // Wichtig bei hohen/offenen Gebäuden (z.B. Fabrikhallen): der Strahl
+    // trifft von oben kommend oft zuerst einen Dachbalken (der hat auch
+    // eine nach oben zeigende Fläche!), bevor er den echten Boden
+    // erreicht. Nimmt man einfach den ERSTEN Treffer, landet man auf dem
+    // Balken statt auf dem Boden. Der niedrigste Treffer mit nach-oben
+    // zeigender Normale ist fast immer der tatsächliche Fußboden.
+    const floorCandidates = hits.filter(h => h.face && h.face.normal && h.face.normal.y > 0.5);
+    if (floorCandidates.length > 0) {
+      const lowestHit = floorCandidates.reduce((a, b) => a.point.y < b.point.y ? a : b);
+      lastFloorY = lowestHit.point.y;
     } else {
       // Fallback: keine nach-oben zeigende Fläche gefunden
       lastFloorY = box.min.y;
@@ -874,7 +919,8 @@ function setupModel(gltf, filename) {
 // ── Kollision ────────────────────────────────────────────────────
 const wallRay=new THREE.Raycaster(), floorRay=new THREE.Raycaster();
 const DOWN=new THREE.Vector3(0,-1,0);
-const WALL_MARGIN=0.35, MOVE_SPEED=3.5, FLOOR_SEARCH=5.0;
+const WALL_MARGIN=0.35, MOVE_SPEED=3.5;
+let FLOOR_SEARCH=5.0; // wird beim Laden je nach Gebäudehöhe angepasst (siehe setupModel)
 
 function isBlocked(origin,dir){ wallRay.set(origin,dir); wallRay.far=WALL_MARGIN; return wallRay.intersectObjects(collisionMeshes,true).length>0; }
 
