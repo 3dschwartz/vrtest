@@ -371,7 +371,7 @@ renderer.xr.addEventListener('sessionstart', () => {
 const scene = new THREE.Scene();
 let currentBgColor = new THREE.Color(0xffffff);
 scene.background = currentBgColor;
-scene.fog = new THREE.Fog(currentBgColor, 8, 25);
+scene.fog = new THREE.Fog(currentBgColor, 450, 500);
 
 // ── Kamera ───────────────────────────────────────────────────────
 const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.05, 50);
