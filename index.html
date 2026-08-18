@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-<title>vrvrvr</title>
+<title>up1808</title>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 body{background:#ffffff;color:#000000;font-family:Arial,Helvetica,sans-serif;font-size:14px;overflow:hidden;height:100dvh;touch-action:none}
@@ -121,7 +121,7 @@ body{background:#ffffff;color:#000000;font-family:Arial,Helvetica,sans-serif;fon
 <!-- ── Startseite mit Raumauswahl ──────────────────────────── -->
 <div id="upload-screen">
   <h1>GLB Walking</h1>
-  <p class="subtitle">Wähle einen Raum oder lade deine eigene Datei hoch</p>
+  <p class="subtitle">Choose a room or upload your own file, for PC/mobile/VR</p>
   
   <div class="room-grid" id="room-grid">
     <!-- Räume werden dynamisch aus ROOMS generiert -->
@@ -130,7 +130,7 @@ body{background:#ffffff;color:#000000;font-family:Arial,Helvetica,sans-serif;fon
   <div class="divider-small"></div>
   
   <div id="drop-zone">
-    <p>Eigene GLB-Datei hier hineinziehen<br>oder antippen</p>
+    <p>drag or upload your own GLB file here</p>
   </div>
   <input type="file" id="file-input" accept=".glb,.GLB,model/gltf-binary,application/octet-stream,*/*" />
 </div>
@@ -273,7 +273,7 @@ const ROOMS = [
   },
   {
     category: '3D Konstruction',
-    name: 'appartement',
+    name: 'no data',
     file: 'example_08.glb',
     brightness: 3.0,
     ibl: 0.3,
@@ -282,7 +282,7 @@ const ROOMS = [
   },
   {
     category: '3D Konstruction',
-    name: 'workshop',
+    name: 'no data',
     file: 'example_09.glb',
     brightness: 3.5,
     ibl: 0.4,
@@ -293,7 +293,7 @@ const ROOMS = [
   // hinzufügen (Kategorie/Name/Lichtwerte nach Bedarf anpassen) ────
   {
     category: '3D Konstruction',
-    name: 'new room',
+    name: 'no data',
     file: 'example_10.glb',
     brightness: 3.0,
     ibl: 0.3,
@@ -360,6 +360,7 @@ renderer.xr.enabled = true; // WebXR aktivieren
 const vrBtn = VRButton.createButton(renderer);
 document.body.appendChild(vrBtn);
 renderer.xr.addEventListener('sessionend', () => { debugSprite.visible = false; });
+let needsVRHeightCalibration = false;
 renderer.xr.addEventListener('sessionstart', () => {
   // Beim Betreten von VR den Dolly auf Bodenhöhe im Raumzentrum setzen.
   // WICHTIG: hier die Bodenhöhe (nicht + Augenhöhe) verwenden, da die
@@ -368,6 +369,14 @@ renderer.xr.addEventListener('sessionstart', () => {
   // stünde man beim Aufsetzen der Brille zu weit oben im Raum.
   vrDolly.position.set(roomSpawnCenter.x, lastFloorY, roomSpawnCenter.z);
   vrDolly.rotation.set(0, 0, 0);
+  // Die reale Körpergröße des Trägers überschreibt sonst die eingestellte
+  // Augenhöhe komplett. Um die Voreinstellung trotzdem wirksam zu machen,
+  // wird EINMALIG (sobald die erste echte Headset-Pose vorliegt, siehe
+  // updateVRMovement) die Differenz zur eingestellten Augenhöhe gemessen
+  // und als Höhen-Offset auf den Dolly gelegt. Duckt oder streckt man
+  // sich danach, bleibt das natürliche Kopf-Tracking relativ zu diesem
+  // Ausgangspunkt trotzdem voll erhalten.
+  needsVRHeightCalibration = true;
 });
 
 // ── Szene ────────────────────────────────────────────────────────
@@ -529,9 +538,13 @@ const TELEPORT_MAX_DIST = 15;
 function onTeleportSelectStart(event) { activeTeleportController = event.target; }
 function onTeleportSelectEnd() {
   if (teleportTargetValid) {
+    // Höhen-Offset aus der Augenhöhen-Kalibrierung (siehe updateVRMovement)
+    // beibehalten, sonst würde jeder Teleport zurück auf reine Bodenhöhe
+    // springen und die Voreinstellung wieder verlieren.
+    const heightOffset = vrDolly.position.y - lastFloorY;
     vrDolly.position.x = teleportTarget.x;
     vrDolly.position.z = teleportTarget.z;
-    vrDolly.position.y = teleportTarget.y;
+    vrDolly.position.y = teleportTarget.y + heightOffset;
     lastFloorY = teleportTarget.y;
   }
   activeTeleportController = null;
@@ -591,6 +604,18 @@ function updateVRMovement(delta) {
   const session = renderer.xr.getSession();
   const hudLines = [];
   if (!session) { updateDebugHUD(['Keine XR-Session aktiv']); return; }
+
+  // Augenhöhen-Voreinstellung in VR anwenden (einmalig, siehe sessionstart).
+  // camera.position.y ist zu diesem Zeitpunkt bereits die ECHTE, vom
+  // Headset getrackte Höhe über dem Dolly-Boden - die reale Körpergröße
+  // des Trägers. Die Differenz zur gewünschten EYE_HEIGHT wird als
+  // Offset auf den Dolly gelegt, danach bleibt normales Kopf-Tracking
+  // (Ducken, Strecken) relativ zu diesem Ausgangspunkt erhalten.
+  if (needsVRHeightCalibration && camera.position.y > 0.01) {
+    const offset = EYE_HEIGHT - camera.position.y;
+    vrDolly.position.y = lastFloorY + offset;
+    needsVRHeightCalibration = false;
+  }
 
   let turnX = 0;
 
