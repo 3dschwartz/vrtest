@@ -132,7 +132,6 @@ body{background:#ffffff;color:#000000;font-family:Arial,Helvetica,sans-serif;fon
   <div id="drop-zone">
     <p>Eigene GLB-Datei hier hineinziehen<br>oder antippen</p>
   </div>
-  <button class="upload-btn" id="browse-btn">Datei auswählen</button>
   <input type="file" id="file-input" accept=".glb,.GLB,model/gltf-binary,application/octet-stream,*/*" />
 </div>
 
@@ -319,7 +318,6 @@ const progressBar   = document.getElementById('progress-fill');
 const statusText    = document.getElementById('loader-status');
 const startBtn      = document.getElementById('start-btn');
 const newFileBtn    = document.getElementById('new-file-btn');
-const browseBtn     = document.getElementById('browse-btn');
 const fileInput     = document.getElementById('file-input');
 const dropZone      = document.getElementById('drop-zone');
 const bSlider       = document.getElementById('brightness-slider');
@@ -827,7 +825,6 @@ dropZone.addEventListener('drop', e => {
   const f=e.dataTransfer.files[0]; if(f) loadGLBFromFile(f);
 });
 dropZone.addEventListener('click', () => fileInput.click());
-browseBtn.addEventListener('click', () => fileInput.click());
 fileInput.addEventListener('change', e => {
   const f=e.target.files[0]; if(f) loadGLBFromFile(f); fileInput.value='';
 });
