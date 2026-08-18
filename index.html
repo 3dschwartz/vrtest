@@ -24,15 +24,14 @@ body{background:#ffffff;color:#000000;font-family:Arial,Helvetica,sans-serif;fon
 .room-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;width:min(620px,92vw)}
 .room-card{padding:18px 14px;background:transparent;border:1px solid #cccccc;display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;transition:border-color 0.2s,background 0.2s}
 .room-card:hover,.room-card:active{border-color:#000000;background:rgba(0,0,0,0.04)}
-.room-card .room-category{letter-spacing:0.15em;color:#888888;text-transform:uppercase}
-.room-card .room-name{letter-spacing:0.1em;color:#000000;text-transform:uppercase}
+.room-card .room-category{letter-spacing:0.15em;color:#888888}
+.room-card .room-name{letter-spacing:0.1em;color:#000000}
 .room-card.active{border-color:#000000;background:rgba(0,0,0,0.05)}
 
 .divider-small{width:min(320px,60vw);height:1px;background:#dddddd}
 
 #drop-zone{width:min(420px,85vw);height:70px;border:1px solid #cccccc;display:flex;flex-direction:row;align-items:center;justify-content:center;gap:12px;cursor:pointer;transition:border-color 0.2s,background 0.2s}
 #drop-zone:hover,#drop-zone.dragover{border-color:#000000;background:rgba(0,0,0,0.04)}
-#drop-zone .icon{opacity:0.4}
 #drop-zone p{letter-spacing:0.12em;color:#666666;text-transform:uppercase;text-align:left;line-height:1.4}
 #file-input{display:none}
 .upload-btn{width:min(420px,85vw);height:70px;background:transparent;border:1px solid #bbbbbb;color:#888888;letter-spacing:0.2em;text-transform:uppercase;cursor:pointer;transition:border-color 0.2s,color 0.2s;display:flex;align-items:center;justify-content:center}
@@ -131,7 +130,6 @@ body{background:#ffffff;color:#000000;font-family:Arial,Helvetica,sans-serif;fon
   <div class="divider-small"></div>
   
   <div id="drop-zone">
-    <div class="icon">&#8682;</div>
     <p>Eigene GLB-Datei hier hineinziehen<br>oder antippen</p>
   </div>
   <button class="upload-btn" id="browse-btn">Datei auswählen</button>
@@ -214,7 +212,7 @@ const ROOMS = [
   {
     category: '3D Scan',
     name: 'Tunnel',
-    file: 'room_example_1.glb',
+    file: 'example_01.glb',
     brightness: 3.0,
     ibl: 0.2,
     eyeHeight: 1.20,
@@ -223,7 +221,7 @@ const ROOMS = [
   {
     category: '3D Scan',
     name: 'Stairwell',
-    file: 'room_example_2.glb',
+    file: 'example_02.glb',
     brightness: 2.5,
     ibl: 0.5,
     eyeHeight: 1.20,
@@ -232,7 +230,7 @@ const ROOMS = [
   {
     category: '3D Scan',
     name: 'Scatepark',
-    file: 'room_example_3.glb',
+    file: 'example_03.glb',
     brightness: 4.0,
     ibl: 0.1,
     eyeHeight: 1.20,
@@ -241,7 +239,7 @@ const ROOMS = [
   {
     category: '3D Scan',
     name: 'Basement',
-    file: 'room_example_4.glb',
+    file: 'example_04.glb',
     brightness: 1.8,
     ibl: 1.0,
     eyeHeight: 1.20,
@@ -250,7 +248,7 @@ const ROOMS = [
   {
     category: '3D Scan',
     name: 'Driveway',
-    file: 'room_example_5.glb',
+    file: 'example_05.glb',
     brightness: 3.5,
     ibl: 0.3,
     eyeHeight: 1.20,
@@ -259,20 +257,16 @@ const ROOMS = [
   {
     category: '3D Scan',
     name: 'Technical building',
-    file: 'room_example_6.glb',
+    file: 'example_06.glb',
     brightness: 2.0,
     ibl: 1.0,
     eyeHeight: 1.20,
     bgColor: '#fefefe'
   },
-  // ── NEU: Platzhalter für 3 weitere Beispiele ──────────────────
-  // WICHTIG: Diese 3 Dateien müssen noch als room_example_7/8/9.glb
-  // ins Verzeichnis gelegt werden (Kategorie, Name, Dateiname und
-  // Lichtwerte gerne nach Bedarf anpassen).
   {
     category: '3D Konstruction',
     name: 'old appartement',
-    file: 'room_example_7.glb',
+    file: 'example_07.glb',
     brightness: 2.5,
     ibl: 0.5,
     eyeHeight: 1.20,
@@ -281,7 +275,7 @@ const ROOMS = [
   {
     category: '3D Konstruction',
     name: 'appartement',
-    file: 'room_example_8.glb',
+    file: 'example_08.glb',
     brightness: 3.0,
     ibl: 0.3,
     eyeHeight: 1.20,
@@ -290,11 +284,22 @@ const ROOMS = [
   {
     category: '3D Konstruction',
     name: 'workshop',
-    file: 'room_example_9.glb',
+    file: 'example_09.glb',
     brightness: 3.5,
     ibl: 0.4,
     eyeHeight: 1.20,
     bgColor: '#f0f0f0'
+  },
+  // ── NEU: 10. Beispiel - Platzhalter, Datei noch als example_10.glb
+  // hinzufügen (Kategorie/Name/Lichtwerte nach Bedarf anpassen) ────
+  {
+    category: '3D Konstruction',
+    name: 'new room',
+    file: 'example_10.glb',
+    brightness: 3.0,
+    ibl: 0.3,
+    eyeHeight: 1.20,
+    bgColor: '#fefefe'
   }
 ];
 // ═══════════════════════════════════════════════════════════════════
