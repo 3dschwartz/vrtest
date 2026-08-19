@@ -16,7 +16,7 @@ body{background:#ffffff;color:#000000;font-family:Arial,Helvetica,sans-serif;fon
 #loader-status{letter-spacing:0.15em;color:#666666}
 
 /* ── Startseite mit Raumauswahl ──────────────────────────── */
-#upload-screen{position:fixed;inset:0;background:#ffffff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:28px;z-index:90;overflow-y:auto;padding:40px 20px}
+#upload-screen{position:fixed;inset:0;background:#ffffff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:28px;z-index:90;overflow-y:auto;padding:40px 20px;touch-action:pan-y}
 #upload-screen.hidden{display:none}
 #upload-screen h1{font-weight:400;letter-spacing:0.3em;text-transform:uppercase;color:#000000}
 #upload-screen .subtitle{letter-spacing:0.2em;color:#555555;text-transform:uppercase;margin-top:-18px}
@@ -38,7 +38,7 @@ body{background:#ffffff;color:#000000;font-family:Arial,Helvetica,sans-serif;fon
 .upload-btn:hover,.upload-btn:active{border-color:#000000;color:#000000}
 
 /* Overlay */
-#overlay{position:fixed;inset:0;background:rgba(255,255,255,0.94);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;z-index:50;backdrop-filter:blur(4px);transition:opacity 0.3s ease;overflow-y:auto;padding:20px 0}
+#overlay{position:fixed;inset:0;background:rgba(255,255,255,0.94);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;z-index:50;backdrop-filter:blur(4px);transition:opacity 0.3s ease;overflow-y:auto;padding:20px 0;touch-action:pan-y}
 #overlay.hidden{opacity:0;pointer-events:none}
 #overlay h2{font-weight:400;letter-spacing:0.25em;text-transform:uppercase;color:#000000}
 .controls-hint{display:grid;grid-template-columns:auto 1fr;gap:5px 14px;letter-spacing:0.08em;color:#888888;line-height:1.7}
@@ -115,7 +115,7 @@ body{background:#ffffff;color:#000000;font-family:Arial,Helvetica,sans-serif;fon
 <div id="loader" class="hidden">
   <h1>GLB Walking</h1>
   <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
-  <span id="loader-status">Lade Modell ...</span>
+  <span id="loader-status">Loading model ...</span>
 </div>
 
 <!-- ── Startseite mit Raumauswahl ──────────────────────────── -->
@@ -148,26 +148,26 @@ body{background:#ffffff;color:#000000;font-family:Arial,Helvetica,sans-serif;fon
   </div>
   <div class="divider"></div>
   <div class="settings-grid">
-    <label for="brightness-slider">Helligkeit</label>
+    <label for="brightness-slider">Brightness</label>
     <input type="range" id="brightness-slider" min="0.5" max="8" step="0.1" value="3.0" />
     <span id="brightness-value">3.0</span>
 
-    <label for="ibl-strength">IBL St&auml;rke</label>
+    <label for="ibl-strength">IBL Strength</label>
     <input type="range" id="ibl-strength" min="0" max="3" step="0.1" value="0.2" />
     <span id="ibl-strength-value">0.2</span>
 
-    <label for="height-slider">Augenh&ouml;he</label>
+    <label for="height-slider">Eye Height</label>
     <input type="range" id="height-slider" min="0.5" max="2.5" step="0.05" value="1.20" />
     <span id="height-value">1.20 m</span>
 
-    <label for="bg-color">Hintergrund</label>
+    <label for="bg-color">Background</label>
     <input type="color" id="bg-color" value="#ffffff" style="width:50px;height:28px;border:1px solid #bbbbbb;background:none;cursor:pointer;padding:2px" />
     <span></span>
   </div>
   <div class="divider"></div>
   <div class="btn-row">
-    <button class="start-btn" id="start-btn">Betreten</button>
-    <button class="new-file-btn" id="new-file-btn">Neue Datei</button>
+    <button class="start-btn" id="start-btn">Enter</button>
+    <button class="new-file-btn" id="new-file-btn">New File</button>
   </div>
 </div>
 
